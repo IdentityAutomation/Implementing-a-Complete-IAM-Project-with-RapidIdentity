@@ -1,0 +1,4 @@
+id,firstName,lastName,dateOfBirth,locationCode,personalEmail,nationalId,courses,status
+946442120,Rubi,Ellison,1996-11-01,3414,elli1996@hotmail.com,341-42-4551,"ACCT102,ECON102,PSYC102,COMM102",A
+900317741,Rorie,Marshfield,1991-10-06,3414,roarie@yahoo.com,234-24-5521,"ACCT101,ECON101,PSYC101,COMM101",A
+906737477,Germaine,Migheli,05-27-1989,3414,gmigheli1@bravesites.com,866-55-0848,"ACCT102,ECON102,PHIL102,COMM201",A
