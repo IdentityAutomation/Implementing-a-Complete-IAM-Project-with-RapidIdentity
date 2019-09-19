@@ -1,7 +1,0 @@
-employee@[department]
-employee@[position]
-student@[school]
-customer@[system]
-
-Former:
-__employee@[department]
