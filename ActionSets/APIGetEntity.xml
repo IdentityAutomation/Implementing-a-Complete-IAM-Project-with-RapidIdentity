@@ -1,0 +1,405 @@
+<actionDefs xmlns="urn:idauto.net:dss:actiondef">
+  <actionDef changeCount="754" modifiedMs="1569349131950" modifiedBy="ed6d4420-44e9-4232-9988-039609164f8b" name="APIGetEntity" category="" returnsValue="true">
+    <argDefs>
+      <argDef optional="true" type="string" name="id"/>
+      <argDef optional="true" type="object" name="queryParamCollection"/>
+      <argDef type="string" name="path"/>
+    </argDefs>
+    <actions>
+      <action id="F823B90D-20DF-CC10-0392-5F3561279F0D" name="section">
+        <arg name="label" value="Variables"/>
+        <arg name="do">
+          <action id="706BD681-FF77-48F3-7D6D-5E88E665A80C" name="loadFileAsString" outputVar="template">
+            <arg name="path" value="&quot;/templates/entity-data-template.json&quot;"/>
+          </action>
+          <action id="774F20C9-CD6C-1828-DC79-5E88E6667263" name="parseJSON" outputVar="template">
+            <arg name="json" value="template"/>
+          </action>
+          <action id="E04FFCC0-F4DE-ED74-E1DC-5F529B3FE59E" name="section">
+            <arg name="label" value="QueryParameters"/>
+            <arg name="do">
+              <action id="C0506441-3D07-4557-7162-5F587E9E2D0B" name="if">
+                <arg name="condition" value="!queryParamCollection"/>
+                <arg name="then">
+                  <action id="E81DD955-93D5-BDAB-C828-63C5B7DD62FA" name="setVariable">
+                    <arg name="name" value="queryParamCollection"/>
+                    <arg name="value" value="{}"/>
+                  </action>
+                </arg>
+              </action>
+              <action id="67A482B2-E2C7-B1BE-8095-5F6A74D7E839" name="setVariable">
+                <arg name="name" value="type"/>
+                <arg name="value" value="queryParamCollection.type ? queryParamCollection.type[0] : 'entities'"/>
+              </action>
+              <action id="15364662-5F49-A44B-41CF-5FA1007C9CC4" name="setVariable">
+                <arg name="name" value="limit"/>
+                <arg name="value" value="queryParamCollection.limit ? Number(queryParamCollection.limit[0]) : 1000"/>
+              </action>
+              <action id="17F94708-76B8-64A3-0A41-5F97C8825C50" name="setVariable">
+                <arg name="name" value="offset"/>
+                <arg name="value" value="(queryParamCollection.offset &amp;&amp; Number(queryParamCollection.offset >= 1)) ? Number(queryParamCollection.offset[0]) : 1"/>
+              </action>
+              <action id="44B62ED3-E238-9B2E-5B52-5F97C8831986" name="setVariable">
+                <arg name="name" value="sort"/>
+                <arg name="value" value="queryParamCollection.sort ? queryParamCollection.sort[0] : 'insertedAt'"/>
+              </action>
+              <action id="3E16461E-6A67-6F92-6194-5F97C8847481" name="setVariable">
+                <arg name="name" value="sortOrder"/>
+                <arg name="value" value="queryParamCollection.sortOrder ? queryParamCollection.sortOrder[0] : 'DESC'"/>
+              </action>
+              <action id="E4FC3D80-0BF9-6295-986D-63D6BBD26E22" name="comment">
+                <arg name="comment" value="TODO implement date range options"/>
+              </action>
+              <action id="69E50D04-9173-46B3-F23C-63D547D94A40" name="setVariable" disabled="true">
+                <arg name="name" value="startRange"/>
+                <arg name="value" value="queryParamCollection.startRange ? queryParamCollection.startRange[0] : null"/>
+              </action>
+              <action id="3D1D20C7-A330-C082-FDEB-63D66C80095A" name="setVariable" disabled="true">
+                <arg name="name" value="endRange"/>
+                <arg name="value" value="queryParamCollection.endRange ? queryParamCollection.endRange[0] : null"/>
+              </action>
+            </arg>
+          </action>
+          <action id="7F7E5F81-09D4-63E5-3069-638E928048AD" name="setVariable">
+            <arg name="name" value="queryParamsObject"/>
+            <arg name="value" value="{&quot;type&quot;: type, &quot;limit&quot;: limit, &quot;offset&quot;: offset, &quot;sort&quot;: sort, &quot;sortOrder&quot;: sortOrder}"/>
+          </action>
+        </arg>
+      </action>
+      <action id="92F39FD3-1D7F-D7B0-61BB-5F35AA27B78E" name="section">
+        <arg name="label" value="Open"/>
+        <arg name="do">
+          <action id="28407DD8-4CA1-6FEE-4D83-5E13A680B501" name="openDatabaseConnection" outputVar="sessionMV">
+            <arg name="jdbcDriverClass" value="&quot;com.mysql.cj.jdbc.Driver&quot;"/>
+            <arg name="jdbcURL" value="&quot;jdbc:mysql://10.0.8.160/metavault&quot;"/>
+            <arg name="user" value="&quot;idautoAdmin&quot;"/>
+            <arg name="password" value="$$$pwd(&quot;Lx29KhhL2eYpyOXnN7c3f//BUGcSBaLroChKhsD2nM0=&quot;)"/>
+          </action>
+        </arg>
+      </action>
+      <action id="5A94B2CF-909A-2069-4CB5-5F35C40F722E" name="section">
+        <arg name="label" value="QueryAffiliations"/>
+        <arg name="do">
+          <action id="97D5E1B3-4EE7-C1A5-8013-5EA0B104E7C8" name="loadFileAsString" outputVar="sql">
+            <arg name="path" value="&quot;/sql/ingest_live_affiliations.sql&quot;"/>
+          </action>
+          <action id="7C38E14B-783E-579F-1B93-5EA44DEDD112" name="queryDatabaseSQL" outputVar="records">
+            <arg name="dbConnection" value="sessionMV"/>
+            <arg name="sql" value="sql"/>
+          </action>
+          <action id="0A63E469-2C93-FBF1-562B-5EA5F975FE8D" name="setVariable">
+            <arg name="name" value="affiliations"/>
+            <arg name="value" value="[]"/>
+          </action>
+          <action id="A19D362A-3D01-53D4-6433-5EA5DBFD8D8F" name="forEach">
+            <arg name="variable" value="record"/>
+            <arg name="collection" value="records"/>
+            <arg name="do">
+              <action id="B2AEF32A-E21C-D1FC-C6DF-5EA62F05BE5D" name="appendArrayItem">
+                <arg name="array" value="affiliations"/>
+                <arg name="item" value="record.affiliation"/>
+              </action>
+            </arg>
+          </action>
+        </arg>
+      </action>
+      <action id="D8460877-6779-1C4E-DFC1-5E8861FBC442" name="section">
+        <arg name="label" value="Data"/>
+        <arg name="do">
+          <action id="70AA9332-4750-28A1-ECFB-645BE7C04378" name="loadFileAsString" outputVar="sqlCount">
+            <arg name="path" value="&quot;/sql/master_live_count.sql&quot;"/>
+          </action>
+          <action id="EBFB9214-A267-4AEE-7CFC-645A8A97B754" name="queryDatabaseSQL" outputVar="recordCount">
+            <arg name="dbConnection" value="sessionMV"/>
+            <arg name="sql" value="sqlCount"/>
+          </action>
+          <action id="57C0BEF6-3188-8260-7615-645C839CF47B" name="setVariable">
+            <arg name="name" value="count"/>
+            <arg name="value" value="recordCount[0].count"/>
+          </action>
+          <action id="02D53DD9-6101-EA33-3D09-5F43DCC69266" name="loadFileAsString" outputVar="sql">
+            <arg name="path" value="&quot;/sql/master_live_select.sql&quot;"/>
+          </action>
+          <action id="D7248765-AB54-EE8A-8324-5F4440D06A81" name="stringFromTemplate" outputVar="sql">
+            <arg name="format" value="sql"/>
+            <arg name="args" value="{'sort': sort, 'sortOrder': sortOrder, 'limit': limit, 'offset': offset}"/>
+          </action>
+          <action id="8228AB7B-BE46-F70F-87A4-5F8ED478FC14" name="queryDatabaseSQL" outputVar="records">
+            <arg name="dbConnection" value="sessionMV"/>
+            <arg name="sql" value="sql"/>
+          </action>
+          <action id="385E5218-10F0-E65B-4C4F-5F93D6EE0AEC" name="section">
+            <arg name="label" value="Links"/>
+            <arg name="do">
+              <action id="A88367A4-6FFF-D3C9-E9E8-6390DE7F1ED9" name="setVariable">
+                <arg name="name" value="queryParams"/>
+                <arg name="value" value="&quot;?type=&quot; + queryParamsObject.type + &quot;&amp;limit=&quot; + queryParamsObject.limit + &quot;&amp;offset=&quot; + queryParamsObject.offset + &quot;&amp;sort=&quot; + sort + &quot;&amp;sortOrder=&quot; + sortOrder"/>
+              </action>
+              <action id="CF090B0C-B07D-6313-8311-5F93D6EFEB16" name="setVariable">
+                <arg name="name" value="template.links.self"/>
+                <arg name="value" value="Global.restBaseUrl + '/' + path + queryParams"/>
+              </action>
+              <action id="1A47723F-4975-E102-0A5F-5F93D6F02183" name="section">
+                <arg name="label" value="Pagination"/>
+                <arg name="do">
+                  <action id="B4532CC0-353A-6EB9-38B6-5F93D6F4DC03" name="section">
+                    <arg name="label" value="First"/>
+                    <arg name="do">
+                      <action id="79D5D264-A701-7040-1E5D-63932E98E661" name="setVariable">
+                        <arg name="name" value="queryParamsObject.offset"/>
+                        <arg name="value" value="1"/>
+                      </action>
+                      <action id="C795B7A3-7DF0-2061-7FE2-63929821EF31" name="setVariable">
+                        <arg name="name" value="queryParams"/>
+                        <arg name="value" value="&quot;?type=&quot; + queryParamsObject.type + &quot;&amp;limit=&quot; + queryParamsObject.limit + &quot;&amp;offset=&quot; + queryParamsObject.offset + &quot;&amp;sort=&quot; + sort + &quot;&amp;sortOrder=&quot; + sortOrder"/>
+                      </action>
+                      <action id="11BDD1E8-5B5B-2952-59DD-645460309C51" name="setVariable">
+                        <arg name="name" value="template.links.first"/>
+                        <arg name="value" value="Global.restBaseUrl + '/' + path + queryParams"/>
+                      </action>
+                    </arg>
+                  </action>
+                  <action id="A5F3A297-7086-1F0B-0157-5F93D6FB2625" name="section">
+                    <arg name="label" value="Next"/>
+                    <arg name="do">
+                      <action id="E369174B-C207-A5F4-3C2B-5F93D6FB0B80" name="setVariable">
+                        <arg name="name" value="offsetNext"/>
+                        <arg name="value" value="offset + limit"/>
+                      </action>
+                      <action id="90B72595-A59F-49B5-D126-5F93D6FCA21C" name="if">
+                        <arg name="condition" value="count - offsetNext &lt;= limit"/>
+                        <arg name="then">
+                          <action id="50A689D8-CEC3-4B0C-29C3-5F93D6FDD53E" name="setVariable">
+                            <arg name="name" value="template.links.next"/>
+                            <arg name="value" value="null"/>
+                          </action>
+                          <action id="41936175-5ECD-6BA5-EF00-63949D887B18" name="break">
+                            <arg name="label" value="Next"/>
+                          </action>
+                        </arg>
+                      </action>
+                      <action id="4A8AB788-2E80-8067-6CBF-639387849695" name="setVariable">
+                        <arg name="name" value="queryParamsObject.offset"/>
+                        <arg name="value" value="offsetNext"/>
+                      </action>
+                      <action id="659E5F95-4FC9-3DA4-94ED-6393878528EA" name="setVariable">
+                        <arg name="name" value="queryParams"/>
+                        <arg name="value" value="&quot;?type=&quot; + queryParamsObject.type + &quot;&amp;limit=&quot; + queryParamsObject.limit + &quot;&amp;offset=&quot; + queryParamsObject.offset + &quot;&amp;sort=&quot; + sort + &quot;&amp;sortOrder=&quot; + sortOrder"/>
+                      </action>
+                      <action id="E5FC0F33-3CA5-517C-BD57-5F93D6FE7069" name="setVariable">
+                        <arg name="name" value="template.links.next"/>
+                        <arg name="value" value="Global.restBaseUrl + '/' + path + queryParams"/>
+                      </action>
+                    </arg>
+                  </action>
+                  <action id="2AF803E3-A666-E592-65A1-5F93D6FFF2E9" name="section">
+                    <arg name="label" value="Previous"/>
+                    <arg name="do">
+                      <action id="A7E675BE-F69B-3867-1996-63953DD5DAD2" name="setVariable">
+                        <arg name="name" value="offsetPrevious"/>
+                        <arg name="value" value="offset - limit"/>
+                      </action>
+                      <action id="515ED44B-5C18-2E6E-3F7E-6394B3E942EC" name="if">
+                        <arg name="condition" value="offsetPrevious &lt; 1"/>
+                        <arg name="then">
+                          <action id="6CB5C7F3-2A4D-449D-01EC-6394DFF7A8F0" name="setVariable">
+                            <arg name="name" value="template.links.previous"/>
+                            <arg name="value" value="null"/>
+                          </action>
+                          <action id="08FE838D-BEB8-3E96-C277-6394DFF8A64C" name="break">
+                            <arg name="label" value="Previous"/>
+                          </action>
+                        </arg>
+                      </action>
+                      <action id="9B21CB4F-3391-11B9-176C-63952C1A4560" name="setVariable">
+                        <arg name="name" value="queryParamsObject.offset"/>
+                        <arg name="value" value="offsetPrevious"/>
+                      </action>
+                      <action id="74E6B012-A6F3-3653-16B4-63952C1BAC7E" name="setVariable">
+                        <arg name="name" value="queryParams"/>
+                        <arg name="value" value="&quot;?type=&quot; + queryParamsObject.type + &quot;&amp;limit=&quot; + queryParamsObject.limit + &quot;&amp;offset=&quot; + queryParamsObject.offset + &quot;&amp;sort=&quot; + sort + &quot;&amp;sortOrder=&quot; + sortOrder"/>
+                      </action>
+                      <action id="CECC635C-E5B1-D8F4-D0B5-63952C1CF5D3" name="setVariable">
+                        <arg name="name" value="template.links.previous"/>
+                        <arg name="value" value="Global.restBaseUrl + '/' + path + queryParams"/>
+                      </action>
+                    </arg>
+                  </action>
+                  <action id="5E2D3B1F-FFB0-7F7F-A2FA-5F93D7009725" name="section">
+                    <arg name="label" value="Last"/>
+                    <arg name="do">
+                      <action id="DD7CB2AF-2382-96D6-FA02-63962C2CF336" name="setVariable">
+                        <arg name="name" value="offsetLast"/>
+                        <arg name="value" value="count - limit"/>
+                      </action>
+                      <action id="6C798C09-9EC1-40B6-B3AE-63962C2DF9B0" name="setVariable">
+                        <arg name="name" value="queryParamsObject.offset"/>
+                        <arg name="value" value="offsetLast"/>
+                      </action>
+                      <action id="AE15C98C-D1A9-D117-4312-63962C2E543B" name="setVariable">
+                        <arg name="name" value="queryParams"/>
+                        <arg name="value" value="&quot;?type=&quot; + queryParamsObject.type + &quot;&amp;limit=&quot; + queryParamsObject.limit + &quot;&amp;offset=&quot; + queryParamsObject.offset + &quot;&amp;sort=&quot; + sort + &quot;&amp;sortOrder=&quot; + sortOrder"/>
+                      </action>
+                      <action id="BF69C41D-FE42-394B-809A-63962C2F7A57" name="setVariable">
+                        <arg name="name" value="template.links.last"/>
+                        <arg name="value" value="Global.restBaseUrl + '/' + path + queryParams"/>
+                      </action>
+                    </arg>
+                  </action>
+                </arg>
+              </action>
+            </arg>
+          </action>
+          <action id="7210DF26-1FCD-7BA1-3014-5F8ED480D635" name="forEach">
+            <arg name="variable" value="record"/>
+            <arg name="collection" value="records"/>
+            <arg name="do">
+              <action id="0D51D736-AD0A-BF06-31E2-5F8ED481BF02" name="parseJSON" outputVar="record.affiliations">
+                <arg name="json" value="record.affiliations"/>
+              </action>
+              <action id="8688C2A6-39F3-38F2-DC53-5F8ED48205B3" name="loadFileAsString" outputVar="node">
+                <arg name="path" value="&quot;/templates/entity-data-node-template.json&quot;"/>
+              </action>
+              <action id="E393F4F8-AEAF-74AC-7B73-5F8ED483D82F" name="parseJSON" outputVar="node">
+                <arg name="json" value="node"/>
+              </action>
+              <action id="EDFFDEE1-279E-E1E9-E618-5F8ED48415B4" name="setVariable">
+                <arg name="name" value="node.type"/>
+                <arg name="value" value="&quot;entity&quot;"/>
+              </action>
+              <action id="B458BC90-5C9D-C59D-E1DC-5F8ED489AE49" name="setVariable">
+                <arg name="name" value="node.id"/>
+                <arg name="value" value="record.id"/>
+              </action>
+              <action id="77699387-C1F9-7D1B-8DA8-63D1EA7F8C09" name="setVariable">
+                <arg name="name" value="node.insertedAt"/>
+                <arg name="value" value="record.insertedAt"/>
+              </action>
+              <action id="4D1753EC-851D-9BBC-4757-63D23BA87B73" name="setVariable">
+                <arg name="name" value="node.updatedAt"/>
+                <arg name="value" value="record.updatedAt"/>
+              </action>
+              <action id="B313E1D3-C2E7-897B-8FD8-5F8ED48EE30B" name="section">
+                <arg name="label" value="Relationships"/>
+                <arg name="do">
+                  <action id="B93E2945-A14A-02A2-7D6F-5F8ED493EAE0" name="forEach">
+                    <arg name="variable" value="affiliation"/>
+                    <arg name="collection" value="affiliations"/>
+                    <arg name="do">
+                      <action id="2DB26C2F-8668-8DDC-CBDC-5F8ED494445C" name="if">
+                        <arg name="condition" value="!record.affiliations[affiliation]"/>
+                        <arg name="then">
+                          <action id="9AA166EC-9DB2-8899-A969-5F8ED4950573" name="continue"/>
+                        </arg>
+                      </action>
+                      <action id="47261DC9-4E42-DA98-F93B-63CE9628744E" name="section">
+                        <arg name="label" value="Affiliation"/>
+                        <arg name="do">
+                          <action id="74B7D849-18F6-98D1-DEB5-5F8ED496157C" name="setVariable">
+                            <arg name="name" value="node.relationships[affiliation]"/>
+                            <arg name="value" value="{}"/>
+                          </action>
+                          <action id="561CF161-6F61-9A3E-194C-63CFBB08A0BA" name="section">
+                            <arg name="label" value="Attributes"/>
+                            <arg name="do">
+                              <action id="67D8C4D1-7874-2DC0-59B4-6473924DE646" name="loadFileAsString" outputVar="sql">
+                                <arg name="path" value="&quot;/sql/ingest_live_select.sql&quot;"/>
+                              </action>
+                              <action id="C9819B82-0835-99FC-72ED-6473CAC57AE9" name="stringFromTemplate" outputVar="sql">
+                                <arg name="format" value="sql"/>
+                                <arg name="args" value="{'affiliation': affiliation, 'objectId': record.affiliations[affiliation].id}"/>
+                              </action>
+                              <action id="5861A344-BBBA-071F-2C7B-63BE3604405D" name="queryDatabaseSQL" outputVar="result">
+                                <arg name="dbConnection" value="sessionMV"/>
+                                <arg name="sql" value="sql"/>
+                              </action>
+                              <action id="C2E8F9B9-4F61-0152-D79F-64756C57059B" name="setVariable">
+                                <arg name="name" value="node.relationships[affiliation].entityId"/>
+                                <arg name="value" value="result[0].entityId"/>
+                              </action>
+                              <action id="F5D5968C-FA89-A2BF-5B9A-64756C5834D9" name="setVariable">
+                                <arg name="name" value="node.relationships[affiliation].insertedAt"/>
+                                <arg name="value" value="result[0].insertedAt"/>
+                              </action>
+                              <action id="D69A929B-B84A-197D-6C78-64756C58092E" name="setVariable">
+                                <arg name="name" value="node.relationships[affiliation].updatedAt"/>
+                                <arg name="value" value="result[0].updatedAt"/>
+                              </action>
+                              <action id="314972DC-921C-2A48-31AE-63CA357E41A1" name="parseJSON" outputVar="object">
+                                <arg name="json" value="result[0].object"/>
+                              </action>
+                              <action id="98177BE8-091A-C1FD-0C2C-63C1631C7EB8" name="setVariable">
+                                <arg name="name" value="node.relationships[affiliation].attributes"/>
+                                <arg name="value" value="{}"/>
+                              </action>
+                              <action id="C12A9994-2FC9-9D46-AB8B-63C03D45ED47" name="forEach">
+                                <arg name="variable" value="field"/>
+                                <arg name="collection" value="Object.keys(object)"/>
+                                <arg name="do">
+                                  <action id="AE26BCA6-314C-DDF9-E7B8-63BFAEB6976D" name="setVariable">
+                                    <arg name="name" value="node.relationships[affiliation].attributes[field]"/>
+                                    <arg name="value" value="object[field]"/>
+                                  </action>
+                                </arg>
+                              </action>
+                            </arg>
+                          </action>
+                          <action id="E952108D-F7FE-A2AF-872D-5F8ED496352F" name="section">
+                            <arg name="label" value="Links"/>
+                            <arg name="do">
+                              <action id="B3B0306A-CB63-04DF-1E6D-63B1E9B9FE99" name="setVariable">
+                                <arg name="name" value="node.relationships[affiliation].links"/>
+                                <arg name="value" value="{}"/>
+                              </action>
+                              <action id="852F1275-DBC0-913D-837F-5F8ED497F494" name="setVariable">
+                                <arg name="name" value="node.relationships[affiliation].links.self"/>
+                                <arg name="value" value="Global.restBaseUrl + '/' + path + affiliation + '/' + record.affiliations[affiliation].id"/>
+                              </action>
+                            </arg>
+                          </action>
+                        </arg>
+                      </action>
+                    </arg>
+                  </action>
+                </arg>
+              </action>
+              <action id="DC44E4BD-8495-62FE-FAAC-63B2B3773726" name="section">
+                <arg name="label" value="Links"/>
+                <arg name="do">
+                  <action id="CA6E85A5-F7B6-4135-E4CC-63B2B3787CC4" name="setVariable">
+                    <arg name="name" value="node.links.self"/>
+                    <arg name="value" value="Global.restBaseUrl + '/' + path + node.type + '/' + record.id"/>
+                  </action>
+                </arg>
+              </action>
+              <action id="734D506E-A972-FBE8-7BAB-5F18188E8ABA" name="appendArrayItem">
+                <arg name="array" value="template.data"/>
+                <arg name="item" value="node"/>
+              </action>
+            </arg>
+          </action>
+        </arg>
+      </action>
+      <action id="B18B4381-427D-13A7-C712-5F0C1DB630CE" name="section">
+        <arg name="label" value="Response"/>
+        <arg name="do">
+          <action id="847A1B11-7A03-402D-6653-5F1C266670FD" name="log">
+            <arg name="message" value="template"/>
+          </action>
+          <action id="F91A88D0-89B5-866B-15AB-5F21DA5671A3" name="toJSON" outputVar="data">
+            <arg name="item" value="template"/>
+            <arg name="indent" value="true"/>
+          </action>
+          <action id="A1C08445-3481-96A0-A99E-5F0C43765F0D" name="createRESTPointResponse" outputVar="response">
+            <arg name="statusCode" value="200"/>
+            <arg name="data" value="data"/>
+            <arg name="contentType" value="&quot;application/json&quot;"/>
+          </action>
+          <action id="B2A751EC-97DB-09C5-54CF-5F0C94DE0A3E" name="return">
+            <arg name="value" value="response"/>
+          </action>
+        </arg>
+      </action>
+    </actions>
+  </actionDef>
+</actionDefs>

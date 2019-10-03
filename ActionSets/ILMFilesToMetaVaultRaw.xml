@@ -1,0 +1,86 @@
+<actionDefs xmlns="urn:idauto.net:dss:actiondef">
+  <actionDef changeCount="574" modifiedMs="1568661880550" modifiedBy="ed6d4420-44e9-4232-9988-039609164f8b" modifiedByName="admin" name="ILMFilesToMetaVaultRaw" category="" builtIn="false" community="false">
+    <argDefs/>
+    <actions>
+      <action id="4B659FED-A49E-8EC7-4DE5-1C9B5100E1FC" name="openDatabaseConnection" outputVar="sessionMV">
+        <arg name="jdbcDriverClass" value="&quot;com.mysql.cj.jdbc.Driver&quot;"/>
+        <arg name="jdbcURL" value="&quot;jdbc:mysql://10.0.8.160/metavault&quot;"/>
+        <arg name="user" value="&quot;idautoAdmin&quot;"/>
+        <arg name="password" value="$$$pwd(&quot;Lx29KhhL2eYpyOXnN7c3f//BUGcSBaLroChKhsD2nM0=&quot;)"/>
+      </action>
+      <action id="EB53A05C-ACC9-E0F1-E2D6-1CBB0FAB4599" name="updateDatabaseSQL">
+        <arg name="dbConnection" value="sessionMV"/>
+        <arg name="sql" value="&quot;TRUNCATE ingest_raw&quot;"/>
+      </action>
+      <action id="0D44BAEF-DB1B-19EB-5DDC-1CBD54842039" name="listFiles" outputVar="files">
+        <arg name="path" value="&quot;/data&quot;"/>
+      </action>
+      <action id="C17D8038-DA17-D93D-3A05-1CBD81E44562" name="forEach">
+        <arg name="variable" value="file"/>
+        <arg name="collection" value="files"/>
+        <arg name="do">
+          <action id="65614065-1D57-2B31-3D24-1CBE5664FECC" name="splitString" outputVar="fileParts">
+            <arg name="string" value="file"/>
+            <arg name="delimiter" value="&quot;/&quot;"/>
+          </action>
+          <action id="0F0FE767-2B6F-B740-304C-1CBFF63C57F3" name="stringEndsWith" outputVar="isDataFile">
+            <arg name="string" value="fileParts[1]"/>
+            <arg name="pattern" value="&quot;.csv&quot;"/>
+          </action>
+          <action id="FC414CF9-5FE4-84C7-63F8-1CBFC24B6885" name="if">
+            <arg name="condition" value="!isDataFile"/>
+            <arg name="then">
+              <action id="6E0256E5-A4D0-F703-591B-1CC046CC2B08" name="continue"/>
+            </arg>
+          </action>
+          <action id="B4F41270-27F2-AB84-DC3F-1CBEC4641F16" name="stringReplaceAll" outputVar="affiliation">
+            <arg name="string" value="fileParts[1]"/>
+            <arg name="pattern" value="&quot;.csv&quot;"/>
+          </action>
+          <action id="116913BE-8457-FFF8-D038-1CBF2DC45DA7" name="setVariable">
+            <arg name="name" value="affiliation"/>
+            <arg name="value" value="affiliation.toLowerCase()"/>
+          </action>
+          <action id="4CFD5B0F-6662-57A9-F864-1C9C1DF908F0" name="openDelimitedTextInput" outputVar="records">
+            <arg name="fileName" value="file"/>
+            <arg name="firstRecordHandling" value="&quot;Field Names&quot;"/>
+          </action>
+          <action id="77BB580D-2FC4-9712-BF4B-1C9CE9932976" name="setVariable">
+            <arg name="name" value="data"/>
+            <arg name="value" value="null"/>
+          </action>
+          <action id="8C9FFB3D-0975-17F5-4537-1C9CAB499BF7" name="forEach">
+            <arg name="variable" value="record"/>
+            <arg name="collection" value="records"/>
+            <arg name="do">
+              <action id="CE05169C-1A97-B942-C44A-1CA7A032087A" name="setVariable">
+                <arg name="name" value="json"/>
+                <arg name="value" value="JSON.stringify(record)"/>
+              </action>
+              <action id="C5C86537-7311-BE67-2CE2-1C9DE809A661" name="setVariable">
+                <arg name="name" value="row"/>
+                <arg name="value" value="&quot;('&quot;+affiliation+&quot;', '&quot;+record.id+&quot;', '&quot;+json+&quot;', CURTIME(), CURTIME())&quot;"/>
+              </action>
+              <action id="42A84BC1-4DAC-4505-C275-1C9DB6472B57" name="setVariable">
+                <arg name="name" value="data"/>
+                <arg name="value" value="data ? data + &quot;, &quot; + row : row"/>
+              </action>
+            </arg>
+          </action>
+          <action id="18FB725C-86DB-A276-6A4C-1CA07559BDD2" name="setVariable">
+            <arg name="name" value="sql"/>
+            <arg name="value" value="&quot;INSERT INTO ingest_raw (affiliation, objectId, object, insertedAt, updatedAt) VALUES &quot; + data"/>
+          </action>
+          <action id="673C7AF5-D627-7099-BC08-1CA04E910009" name="updateDatabaseSQL" outputVar="results">
+            <arg name="dbConnection" value="sessionMV"/>
+            <arg name="sql" value="sql"/>
+          </action>
+          <action id="15B0F76C-5FEC-36EF-9A84-3B884C5AC0DA" name="log">
+            <arg name="message" value="results + &quot; &quot; + affiliation + &quot; records were imported.&quot;"/>
+            <arg name="color" value="&quot;green&quot;"/>
+          </action>
+        </arg>
+      </action>
+    </actions>
+  </actionDef>
+</actionDefs>

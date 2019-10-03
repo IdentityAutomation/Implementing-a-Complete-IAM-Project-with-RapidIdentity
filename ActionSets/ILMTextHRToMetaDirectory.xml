@@ -1,0 +1,991 @@
+<actionDefs xmlns="urn:idauto.net:dss:actiondef">
+  <actionDef changeCount="285" modifiedMs="1567190314235" modifiedBy="ed6d4420-44e9-4232-9988-039609164f8b" modifiedByName="admin" name="ILMTextHRToMetaDirectory" category="" builtIn="false" community="false" returnsValue="true">
+    <argDefs>
+      <argDef optional="true" type="string" name="key_field"/>
+      <argDef optional="true" type="string" name="key_value"/>
+      <argDef optional="true" type="enum:true,false" name="log_only"/>
+      <argDef optional="true" type="object" name="assertion"/>
+    </argDefs>
+    <actions>
+      <action id="DE9005DD-441B-0A11-F1B8-E317CE4135E0" name="section">
+        <arg name="label" value="Variables"/>
+        <arg name="do">
+          <action id="8FDCF3E8-4DC2-16EA-E765-E31829831FA1" name="setVariable">
+            <arg name="name" value="sourceHRFile"/>
+            <arg name="value" value="&quot;/data/Employees.csv&quot;"/>
+          </action>
+          <action id="7D83B9C3-04EB-28F4-C64E-E317CE42B10E" name="setVariable">
+            <arg name="name" value="currentTime"/>
+            <arg name="value" value="now()"/>
+          </action>
+          <action id="77DB1D42-C515-9EFE-F870-E317CE439C80" name="formatDate" outputVar="currentDate">
+            <arg name="date" value="currentTime"/>
+            <arg name="pattern" value="&quot;yyyyMMdd&quot;"/>
+          </action>
+          <action id="4947C5C0-2AC7-B2A0-7160-E317CE44A0FE" name="setVariable">
+            <arg name="name" value="currentDate"/>
+            <arg name="value" value="currentDate+&quot;000000.0Z&quot;"/>
+          </action>
+          <action id="2E3D6050-A4C9-3899-7F89-E317CE44BE40" name="setVariable">
+            <arg name="name" value="counterTotal"/>
+            <arg name="value" value="0"/>
+          </action>
+          <action id="F6E52CE8-3D77-82C3-B46A-E335A6799D7B" name="setVariable">
+            <arg name="name" value="counterAdded"/>
+            <arg name="value" value="0"/>
+          </action>
+          <action id="7B7BB105-358B-5CA0-163F-E335A683CAAA" name="setVariable">
+            <arg name="name" value="counterUpdated"/>
+            <arg name="value" value="0"/>
+          </action>
+          <action id="8236E580-6620-F509-FBE5-E335A68EF156" name="setVariable">
+            <arg name="name" value="counterEnabled"/>
+            <arg name="value" value="0"/>
+          </action>
+          <action id="AD319010-E64E-FAAC-0809-E335A6989B37" name="setVariable">
+            <arg name="name" value="counterDisabled"/>
+            <arg name="value" value="0"/>
+          </action>
+          <action id="7D8718DB-D3E4-C696-301C-E317CE5CC57E" name="setVariable">
+            <arg name="name" value="counterSkipped"/>
+            <arg name="value" value="0"/>
+          </action>
+          <action id="5E0521EC-30DA-9404-D7E4-E317CE5C3177" name="setVariable">
+            <arg name="name" value="counterErrors"/>
+            <arg name="value" value="0"/>
+          </action>
+        </arg>
+      </action>
+      <action id="CBA0CC9F-C43A-9602-F104-E317F9535E6B" name="section">
+        <arg name="label" value="Connect"/>
+        <arg name="do">
+          <action id="4E1E98AF-627F-5129-C3D9-E318B9DE1F3D" name="isFile" outputVar="fileExists">
+            <arg name="path" value="sourceHRFile"/>
+          </action>
+          <action id="CFA416FF-E8A5-BEB2-3FCB-E31AD9F248F3" name="if">
+            <arg name="condition" value="!fileExists"/>
+            <arg name="then">
+              <action id="6DBDEDCF-AA80-DBF6-D881-E31AD9F30D23" name="log">
+                <arg name="message" value="&quot;File not found&quot;"/>
+                <arg name="level" value="&quot;ERROR&quot;"/>
+              </action>
+              <action id="F103D93D-2891-0AAD-1441-E31AD9F4FA01" name="return"/>
+            </arg>
+          </action>
+          <action id="6A78FFE5-D8A0-FC58-891A-E317F9550B5E" name="openLDAPConnection" outputVar="sessionMeta">
+            <arg name="ldapHost" value="Global.metaHost"/>
+            <arg name="ldapPort" value="Global.metaPort"/>
+            <arg name="useSSL" value="Global.metaSSL"/>
+            <arg name="userDn" value="Global.metaUser"/>
+            <arg name="password" value="Global.metaPwd"/>
+          </action>
+          <action id="3B38DF34-A1F3-1E7D-F8B9-E317F9575056" name="if">
+            <arg name="condition" value="!sessionMeta"/>
+            <arg name="then">
+              <action id="5B616F84-8038-BFE9-C48E-E31A6FF880A8" name="log">
+                <arg name="message" value="&quot;Unable to connect to MetaDirectory&quot;"/>
+                <arg name="level" value="&quot;ERROR&quot;"/>
+              </action>
+              <action id="156347B8-5CAA-21D8-386D-E31A6FF94E2F" name="return"/>
+            </arg>
+          </action>
+          <action id="16D3A236-829D-841B-11C8-E32E453AE6F1" name="definePortalConnection" outputVar="sessionPortal">
+            <arg name="url" value="Global.portalUrl"/>
+            <arg name="username" value="Global.portalUser"/>
+            <arg name="password" value="Global.portalPwd"/>
+            <arg name="login" value="true"/>
+          </action>
+          <action id="2438C85F-9DBE-D918-EAAB-E32FCE6FD891" name="if">
+            <arg name="condition" value="!sessionPortal"/>
+            <arg name="then">
+              <action id="7B59E864-3154-CDD5-3C2B-E32FCE704519" name="log">
+                <arg name="message" value="&quot;Unable to connect to Portal&quot;"/>
+                <arg name="level" value="&quot;ERROR&quot;"/>
+              </action>
+              <action id="63D67B46-DB20-7A20-FB21-E32FCE715E97" name="return"/>
+            </arg>
+          </action>
+        </arg>
+      </action>
+      <action id="42503BC6-1377-A00C-3E89-E3199DFEE292" name="section">
+        <arg name="label" value="Query"/>
+        <arg name="do">
+          <action id="A6B38457-EAB3-0691-B2C2-E3199DFF66E8" name="section">
+            <arg name="label" value="Testing"/>
+            <arg name="do">
+              <action id="3EBC174C-778A-757B-F51E-E3199DFF791B" name="if">
+                <arg name="condition" value="!assertion"/>
+                <arg name="then">
+                  <action id="B66F581E-22E2-9442-4FC2-E3199E0012B3" name="break">
+                    <arg name="label" value="Testing"/>
+                  </action>
+                </arg>
+              </action>
+              <action id="EE60B668-0F6C-8160-10C9-E3199E0135C0" name="setVariable">
+                <arg name="name" value="records"/>
+                <arg name="value" value="[]"/>
+              </action>
+              <action id="2DFD08DD-41E0-DD82-5F11-E3199E02153A" name="appendArrayItem">
+                <arg name="array" value="records"/>
+                <arg name="item" value="assertion.input"/>
+              </action>
+              <action id="4C0AF449-18E5-68E3-58CF-E3199E031C3E" name="break">
+                <arg name="label" value="Query"/>
+              </action>
+            </arg>
+          </action>
+          <action id="84BCF946-6318-F6C5-C420-E31B64A06742" name="openDelimitedTextInput" outputVar="records">
+            <arg name="fileName" value="sourceHRFile"/>
+            <arg name="firstRecordHandling" value="&quot;Field Names&quot;"/>
+          </action>
+        </arg>
+      </action>
+      <action id="FF26D478-4DB9-7B0F-D539-E31E9164DA38" name="section">
+        <arg name="label" value="Iterate"/>
+        <arg name="do">
+          <action id="5E7B6B66-D1AD-09CF-2B06-E31E91656247" name="forEach">
+            <arg name="label" value="IterateRecords"/>
+            <arg name="variable" value="record"/>
+            <arg name="collection" value="records"/>
+            <arg name="do">
+              <action id="B13466DD-E6D1-23F2-CAB3-E31E91671D23" name="section">
+                <arg name="label" value="Validate"/>
+                <arg name="do">
+                  <action id="99760284-FAAF-DFDC-26CC-E31E9167DC81" name="if">
+                    <arg name="condition" value="record[key_field] != key_value"/>
+                    <arg name="then">
+                      <action id="D01B314D-5644-5FFE-949D-E31E916805BC" name="continue">
+                        <arg name="label" value="IterateRecords"/>
+                      </action>
+                    </arg>
+                  </action>
+                  <action id="DE75D5CD-5755-E9CB-E81C-E31E9169016C" name="setVariable">
+                    <arg name="name" value="counterTotal"/>
+                    <arg name="value" value="counterTotal + 1"/>
+                  </action>
+                </arg>
+              </action>
+              <action id="E32A2F5C-F2F4-B9E2-79A6-E31E916AB325" name="section">
+                <arg name="label" value="Transform"/>
+                <arg name="do">
+                  <action id="3BDE3AF7-3878-15F1-33E2-E31E916AF702" name="comment">
+                    <arg name="comment" value="Schema Mappings"/>
+                  </action>
+                  <action id="5272753D-AF48-6601-6C7C-E31E916AAFDB" name="renameRecordFields">
+                    <arg name="record" value="record"/>
+                    <arg name="oldFields" value="&quot;dateOfBirth, departmentCode, firstName, id, lastName, locationCode, managerId, personalEmail, positionCode, ssn, status&quot;"/>
+                    <arg name="newFields" value="&quot;idautoPersonBirthdate, departmentNumber, givenName, employeeNumber, sn, idautoPersonPriLocCode, idautoPersonManagerID, idautoPersonContactEmail, idautoPersonJobCode, idautoPersonNationalID, idautoStatus&quot;"/>
+                  </action>
+                  <action id="2B75F2BF-A21B-DC4C-722F-E31E916C41F0" name="comment">
+                    <arg name="comment" value="Filter Fields"/>
+                  </action>
+                  <action id="E2079659-481B-F9A6-052F-E31E916CC9F8" name="filterRecordFields">
+                    <arg name="record" value="record"/>
+                    <arg name="fields" value="&quot;idautoPersonBirthdate, departmentNumber, givenName, employeeNumber, sn, idautoPersonPriLocCode, idautoPersonManagerID, idautoPersonContactEmail, idautoPersonJobCode, idautoPersonNationalID, idautoStatus&quot;"/>
+                  </action>
+                  <action id="A7858781-9C62-FB06-3B2C-E3AEB8F17AA1" name="section">
+                    <arg name="label" value="DescriptionDerivations"/>
+                    <arg name="do">
+                      <action id="49A47A98-8A12-E453-6C9A-E3B0CE42BCB7" name="comment">
+                        <arg name="comment" value="Department"/>
+                      </action>
+                      <action id="82BBA264-9307-8B5B-CAE0-E3AF3A6A4259" name="loadFileAsString" outputVar="departments">
+                        <arg name="path" value="&quot;/data/Departments.json&quot;"/>
+                      </action>
+                      <action id="AA226E89-D954-A7CB-A3B2-E3AFA36AEADC" name="parseJSON" outputVar="departments">
+                        <arg name="json" value="departments"/>
+                      </action>
+                      <action id="8D271697-B1CE-724E-87D9-E3AFCA923073" name="if">
+                        <arg name="condition" value="departments[record.departmentNumber]"/>
+                        <arg name="then">
+                          <action id="D8F776FE-4AB3-8B6E-A63B-E3B02961B7D0" name="setRecordFieldValue">
+                            <arg name="record" value="record"/>
+                            <arg name="field" value="&quot;idautoPersonDeptDescr&quot;"/>
+                            <arg name="value" value="departments[record.departmentNumber]"/>
+                          </action>
+                        </arg>
+                      </action>
+                      <action id="8B6677C9-B964-00D7-3C87-E3B0EF653E1E" name="comment">
+                        <arg name="comment" value="Position"/>
+                      </action>
+                      <action id="1C9269F5-C4CD-98B8-ED38-E3B0EF66638E" name="loadFileAsString" outputVar="positions">
+                        <arg name="path" value="&quot;/data/Positions.json&quot;"/>
+                      </action>
+                      <action id="C68A03E6-33AC-C09C-162D-E3B0EF673056" name="parseJSON" outputVar="positions">
+                        <arg name="json" value="positions"/>
+                      </action>
+                      <action id="2EDD8DCE-DDE1-B910-53A8-E3B0EF68600E" name="if">
+                        <arg name="condition" value="positions[record.idautoPersonJobCode]"/>
+                        <arg name="then">
+                          <action id="59F92C82-81F5-99C1-0F3F-E3B0EF683907" name="setRecordFieldValue">
+                            <arg name="record" value="record"/>
+                            <arg name="field" value="&quot;title&quot;"/>
+                            <arg name="value" value="positions[record.idautoPersonJobCode]"/>
+                          </action>
+                        </arg>
+                      </action>
+                      <action id="E0B23914-C7CE-96F4-935C-E3B2242C00A2" name="comment">
+                        <arg name="comment" value="Location"/>
+                      </action>
+                      <action id="A6DBED97-7227-1259-8278-E3B2242C8642" name="loadFileAsString" outputVar="locations">
+                        <arg name="path" value="&quot;/data/Locations.json&quot;"/>
+                      </action>
+                      <action id="45C2B63A-96D8-3E23-A9F5-E3B2242D8C11" name="parseJSON" outputVar="locations">
+                        <arg name="json" value="locations"/>
+                      </action>
+                      <action id="02C9C7AC-7CC5-05D4-6C39-E3B2242E6844" name="if">
+                        <arg name="condition" value="locations[record.idautoPersonPriLocCode]"/>
+                        <arg name="then">
+                          <action id="6229E722-97CE-7048-8B32-E3B2242F37B0" name="setRecordFieldValue">
+                            <arg name="record" value="record"/>
+                            <arg name="field" value="&quot;l&quot;"/>
+                            <arg name="value" value="locations[record.idautoPersonPriLocCode]"/>
+                          </action>
+                        </arg>
+                      </action>
+                    </arg>
+                  </action>
+                  <action id="0E26CF68-E2E7-A878-E601-E31E916EC73C" name="comment">
+                    <arg name="comment" value="Default Values"/>
+                  </action>
+                  <action id="B0143737-648F-3819-BD02-E31E916E3DC9" name="setRecordFieldValue">
+                    <arg name="record" value="record"/>
+                    <arg name="field" value="&quot;displayName&quot;"/>
+                    <arg name="value" value="record.givenName + &quot; &quot; + record.sn"/>
+                  </action>
+                  <action id="F853ACA1-A3A2-3A16-CE72-E31E916FB91F" name="comment">
+                    <arg name="comment" value="Encrypted Values"/>
+                  </action>
+                  <action id="1E3950A4-A5D0-EABC-5AA9-E31E9170E590" name="cryptPassword" outputVar="record.idautoPersonNationalID">
+                    <arg name="password" value="record.idautoPersonNationalID"/>
+                    <arg name="algorithm" value="&quot;MD5&quot;"/>
+                    <arg name="salt" value="Global.encryptionSalt"/>
+                  </action>
+                  <action id="077B8AA4-4131-C0DD-22C7-E31E916DDFD0" name="comment">
+                    <arg name="comment" value="Placement"/>
+                  </action>
+                  <action id="1BEE1322-3738-4707-16D3-E31E916D852C" name="setVariable">
+                    <arg name="name" value="newContext"/>
+                    <arg name="value" value="Global.metaUserBaseDN"/>
+                  </action>
+                </arg>
+              </action>
+              <action id="6E5DDE1A-BB21-AC7B-9D5E-E31E91718324" name="section">
+                <arg name="label" value="Match"/>
+                <arg name="do">
+                  <action id="B60C2B69-9F32-5F76-30C7-E31E91724B7A" name="section">
+                    <arg name="label" value="Testing"/>
+                    <arg name="do">
+                      <action id="D749AA9F-5703-2F86-E4FB-E31E9172B43B" name="section">
+                        <arg name="label" value="Validate"/>
+                        <arg name="do">
+                          <action id="797FF6ED-2339-FF06-1AB4-E31E9173F8DF" name="if">
+                            <arg name="condition" value="!assertion"/>
+                            <arg name="then">
+                              <action id="4A94A26C-9E3F-F737-8BA1-E31E91745BA0" name="break">
+                                <arg name="label" value="Testing"/>
+                              </action>
+                            </arg>
+                          </action>
+                        </arg>
+                      </action>
+                      <action id="7DF60111-31AE-FA03-6E52-E31E91758F68" name="setVariable">
+                        <arg name="name" value="exists"/>
+                        <arg name="value" value="[]"/>
+                      </action>
+                      <action id="5FE64176-1335-6BE7-C33A-E31E9175A0E3" name="if">
+                        <arg name="condition" value="!assertion.exists"/>
+                        <arg name="then">
+                          <action id="9652416C-E5BD-E292-37E9-E31E9176C193" name="break">
+                            <arg name="label" value="Match"/>
+                          </action>
+                        </arg>
+                      </action>
+                      <action id="460C26E6-4EDE-E0D4-D689-E31E91771D07" name="createRecordFromObject" outputVar="recordExists">
+                        <arg name="seed" value="assertion.exists"/>
+                      </action>
+                      <action id="E3FF300B-831E-A9F9-16B6-E31E91771B29" name="appendArrayItem">
+                        <arg name="array" value="exists"/>
+                        <arg name="item" value="recordExists"/>
+                      </action>
+                      <action id="86D3286E-EA8D-6B20-A2A4-E31E9178A5A1" name="break">
+                        <arg name="label" value="Match"/>
+                      </action>
+                    </arg>
+                  </action>
+                  <action id="F5CDB953-B56A-351F-A1B8-E31E9179EB41" name="getLDAPRecords" outputVar="exists">
+                    <arg name="ldapConnection" value="sessionMeta"/>
+                    <arg name="baseDn" value="Global.metaBaseDN"/>
+                    <arg name="scope" value="&quot;sub&quot;"/>
+                    <arg name="filter" value="&quot;(employeeNumber=&quot; + record.employeeNumber + &quot;)&quot;"/>
+                    <arg name="attributes" value="&quot;*, +&quot;"/>
+                  </action>
+                  <action id="43B18844-B5C5-5313-969C-E31E917BAF99" name="if">
+                    <arg name="condition" value="!exists"/>
+                    <arg name="then">
+                      <action id="D609C6D3-0925-35A9-64C2-E31E917BD9FD" name="log">
+                        <arg name="message" value="&quot;Unable to query MetaDirectory for match&quot;"/>
+                        <arg name="level" value="&quot;ERROR&quot;"/>
+                      </action>
+                      <action id="ECED7427-39C9-FD33-B6CD-E31E917C8787" name="return"/>
+                    </arg>
+                  </action>
+                  <action id="8ACFA478-55B6-B600-B24A-E3320D81C2DB" name="if">
+                    <arg name="condition" value="exists.length == 0"/>
+                    <arg name="then">
+                      <action id="2AB2C573-E0E2-7631-987F-E3325425425C" name="getLDAPRecords" outputVar="exists">
+                        <arg name="ldapConnection" value="sessionMeta"/>
+                        <arg name="baseDn" value="Global.metaBaseDN"/>
+                        <arg name="scope" value="&quot;sub&quot;"/>
+                        <arg name="filter" value="&quot;(idautoPersonNationalID=&quot; + record.idautoPersonNationalID + &quot;)&quot;"/>
+                        <arg name="attributes" value="&quot;*, +&quot;"/>
+                      </action>
+                      <action id="4832CF83-09A8-FBF8-8F4C-E3327AC5E8DB" name="if">
+                        <arg name="condition" value="!exists"/>
+                        <arg name="then">
+                          <action id="3EE5C668-0D9C-FBCD-770C-E3327AC60B2D" name="log">
+                            <arg name="message" value="&quot;Unable to query MetaDirectory for match&quot;"/>
+                            <arg name="level" value="&quot;ERROR&quot;"/>
+                          </action>
+                          <action id="D8C73AF5-A2ED-EA8E-BF45-E3327AC704B9" name="return"/>
+                        </arg>
+                      </action>
+                    </arg>
+                  </action>
+                </arg>
+              </action>
+              <action id="73850831-9B80-0D2B-1CF7-E31E917D8E2B" name="section">
+                <arg name="label" value="Operations"/>
+                <arg name="do">
+                  <action id="EE07D594-7306-8EB7-15E8-E31E917EBE96" name="section">
+                    <arg name="label" value="Add"/>
+                    <arg name="do">
+                      <action id="6FF037B7-991E-74F1-6F3C-E31E917E4FA9" name="section">
+                        <arg name="label" value="Validate"/>
+                        <arg name="do">
+                          <action id="C45E38A7-F2F1-EEB4-C917-E31E917F31CF" name="if">
+                            <arg name="condition" value="exists.length > 0"/>
+                            <arg name="then">
+                              <action id="0A29472A-2614-4A70-9090-E31E9180277E" name="break">
+                                <arg name="label" value="Add"/>
+                              </action>
+                            </arg>
+                          </action>
+                          <action id="95C7016D-E10F-41F0-55FF-E31E9180D163" name="if">
+                            <arg name="condition" value="!record.employeeNumber || !record.givenName || !record.sn"/>
+                            <arg name="then">
+                              <action id="7A63C9AF-899F-191C-31B4-E31E9181C0C3" name="log">
+                                <arg name="message" value="&quot;Skipping add due to lack of data&quot;"/>
+                                <arg name="level" value="&quot;WARN&quot;"/>
+                              </action>
+                              <action id="56C6E8CA-683E-D471-5940-E31E9182EA4D" name="log">
+                                <arg name="message" value="record"/>
+                                <arg name="level" value="&quot;DEBUG&quot;"/>
+                              </action>
+                              <action id="D51E5D76-932C-953F-DCD6-E31E91831DA8" name="setVariable">
+                                <arg name="name" value="counterSkipped"/>
+                                <arg name="value" value="counterSkipped + 1"/>
+                              </action>
+                              <action id="2E3073EA-0BD1-3515-4FC7-E31E918340ED" name="continue">
+                                <arg name="label" value="IterateRecords"/>
+                              </action>
+                            </arg>
+                          </action>
+                          <action id="C3CBB6F2-99E2-3876-86EA-E31E91843EC0" name="if">
+                            <arg name="condition" value="record.idautoStatus != &quot;A&quot;"/>
+                            <arg name="then">
+                              <action id="3C3AC204-36E7-4B6D-5DA3-E31E91859477" name="log">
+                                <arg name="message" value="record"/>
+                                <arg name="level" value="&quot;DEBUG&quot;"/>
+                              </action>
+                              <action id="D8745924-E510-88DF-A10B-E31E91868BB3" name="setVariable">
+                                <arg name="name" value="counterSkipped"/>
+                                <arg name="value" value="counterSkipped + 1"/>
+                              </action>
+                              <action id="9D13FB4A-345C-9FB7-0C35-E31E91877CB5" name="continue">
+                                <arg name="label" value="IterateRecords"/>
+                              </action>
+                            </arg>
+                          </action>
+                        </arg>
+                      </action>
+                      <action id="5D61E044-1606-2699-B408-E31E91887E45" name="section">
+                        <arg name="label" value="Transform"/>
+                        <arg name="do">
+                          <action id="035F399E-96A6-BD45-011E-E31E918845CC" name="setRecordFieldValues">
+                            <arg name="record" value="record"/>
+                            <arg name="field" value="&quot;objectClass&quot;"/>
+                            <arg name="values" value="[&quot;inetOrgPerson&quot;, &quot;idautoObject&quot;, &quot;idautoPerson&quot;, &quot;eduPerson&quot;]"/>
+                          </action>
+                          <action id="AD50B217-978F-0A2D-F14B-E31E9189EAF0" name="FnGenerateUsername" outputVar="username">
+                            <arg name="session" value="sessionMeta"/>
+                            <arg name="record" value="record"/>
+                          </action>
+                          <action id="19D88BB9-BA18-9A42-2140-E31E918AB830" name="setVariable">
+                            <arg name="name" value="guid"/>
+                            <arg name="value" value="java.util.UUID.randomUUID().toString()"/>
+                          </action>
+                          <action id="7111DADC-E18F-A9E6-CE56-E31E918B3D51" name="setRecordFieldValue">
+                            <arg name="record" value="record"/>
+                            <arg name="field" value="&quot;idautoID&quot;"/>
+                            <arg name="value" value="guid"/>
+                          </action>
+                          <action id="DF7D3386-7E5C-C358-3F7B-E31E918B5CF8" name="setRecordFieldValue">
+                            <arg name="record" value="record"/>
+                            <arg name="field" value="&quot;@dn&quot;"/>
+                            <arg name="value" value="&quot;cn=&quot; + guid + &quot;,&quot; + newContext"/>
+                          </action>
+                          <action id="F3E7E50B-B155-F630-407C-E31E918CFDF4" name="setRecordFieldValues">
+                            <arg name="record" value="record"/>
+                            <arg name="field" value="&quot;idautoPersonUserNameMV&quot;"/>
+                            <arg name="values" value="[record.employeeNumber, username, record.idautoPersonContactEmail]"/>
+                          </action>
+                          <action id="971468E2-A60E-AF5D-A5AB-E32DB02325CD" name="generatePortalPasswordForPolicy" outputVar="password">
+                            <arg name="connection" value="sessionPortal"/>
+                            <arg name="policyId" value="Global.portalInitialPasswordPolicy"/>
+                          </action>
+                          <action id="02C370E4-DC44-F105-A8A5-E31E918E9DA6" name="setRecordFieldValue">
+                            <arg name="record" value="record"/>
+                            <arg name="field" value="&quot;userPassword&quot;"/>
+                            <arg name="value" value="password"/>
+                          </action>
+                          <action id="413BAF0B-4170-57BF-8880-E31E918F37A6" name="setRecordFieldValue">
+                            <arg name="record" value="record"/>
+                            <arg name="field" value="&quot;idautoPersonDefaultPassword&quot;"/>
+                            <arg name="value" value="password"/>
+                          </action>
+                          <action id="98F11BB7-FDAA-7540-5A08-E3302AEB8BD8" name="generatePortalPasswordForPolicy" outputVar="claimCode">
+                            <arg name="connection" value="sessionPortal"/>
+                            <arg name="policyId" value="Global.portalClaimCodePolicy"/>
+                          </action>
+                          <action id="25E71115-36AA-10BC-B84B-E31E919011A7" name="setRecordFieldValue">
+                            <arg name="record" value="record"/>
+                            <arg name="field" value="&quot;idautoPersonClaimCode&quot;"/>
+                            <arg name="value" value="claimCode"/>
+                          </action>
+                          <action id="A9A8AB84-EED8-59CF-0940-E31E91913DEA" name="if">
+                            <arg name="condition" value="!record.idautoPersonContactEmail"/>
+                            <arg name="then">
+                              <action id="103B7F8D-68A2-3E55-EE14-E31E919238D7" name="hashString" outputVar="emailHash">
+                                <arg name="data" value="&quot;not-a-valid-email@dummy.local&quot;"/>
+                                <arg name="algorithm" value="&quot;MD5&quot;"/>
+                              </action>
+                            </arg>
+                            <arg name="else">
+                              <action id="44848B5A-C498-41C0-A6F2-E31E91937D3B" name="hashString" outputVar="emailHash">
+                                <arg name="data" value="record.idautoPersonContactEmail"/>
+                                <arg name="algorithm" value="&quot;MD5&quot;"/>
+                              </action>
+                            </arg>
+                          </action>
+                          <action id="A2357FAC-DB2C-393D-F78C-E31E9195E965" name="setRecordFieldValue">
+                            <arg name="record" value="record"/>
+                            <arg name="field" value="&quot;idautoPersonPhotoURL&quot;"/>
+                            <arg name="value" value="&quot;https://www.gravatar.com/avatar/&quot; + emailHash + &quot;?s=65&quot;"/>
+                          </action>
+                          <action id="9C64948D-6F11-80A2-AD69-E3D1394B123E" name="section">
+                            <arg name="label" value="Affiliations"/>
+                            <arg name="do">
+                              <action id="B11B6F85-A730-F787-138B-E3BC3ADB1E88" name="setRecordFieldValue">
+                                <arg name="record" value="record"/>
+                                <arg name="field" value="&quot;eduPersonAffiliation&quot;"/>
+                                <arg name="value" value="&quot;employee&quot;"/>
+                              </action>
+                              <action id="C4C17E19-F44C-F283-82FB-E3BC3B21021F" name="setRecordFieldValue">
+                                <arg name="record" value="record"/>
+                                <arg name="field" value="&quot;eduPersonPrimaryAffiliation&quot;"/>
+                                <arg name="value" value="&quot;employee&quot;"/>
+                              </action>
+                              <action id="16032C29-E458-DBF9-A48B-E3BC3B510C07" name="setRecordFieldValue">
+                                <arg name="record" value="record"/>
+                                <arg name="field" value="&quot;eduPersonScopedAffiliation&quot;"/>
+                                <arg name="value" value="&quot;employee@&quot; + record.idautoPersonDeptDescr"/>
+                              </action>
+                            </arg>
+                          </action>
+                        </arg>
+                      </action>
+                      <action id="3FCB616B-7EE2-13D8-5BFE-E31E91977FC8" name="section">
+                        <arg name="label" value="Save"/>
+                        <arg name="do">
+                          <action id="5A8709E9-AA79-35C8-F625-E31E91976EBB" name="section">
+                            <arg name="label" value="Testing"/>
+                            <arg name="do">
+                              <action id="E8D80793-2D89-400D-B2A4-E31E91989680" name="section">
+                                <arg name="label" value="Validate"/>
+                                <arg name="do">
+                                  <action id="E2C15419-DCDD-AE3A-4BF0-E31E91992323" name="if">
+                                    <arg name="condition" value="!assertion"/>
+                                    <arg name="then">
+                                      <action id="F6E8877E-6F1F-7B06-57B5-E31E9199FE84" name="break">
+                                        <arg name="label" value="Testing"/>
+                                      </action>
+                                    </arg>
+                                  </action>
+                                </arg>
+                              </action>
+                              <action id="2A6D029C-B77E-8854-83AE-E31E919AA9DD" name="return">
+                                <arg name="value" value="record"/>
+                              </action>
+                              <action id="CDFCB003-7118-19E9-8407-E31E919B94F4" name="continue">
+                                <arg name="label" value="IterateRecords"/>
+                              </action>
+                            </arg>
+                          </action>
+                          <action id="2CEA1891-8836-130C-5C4C-E31E919B61E1" name="section">
+                            <arg name="label" value="LogOnly"/>
+                            <arg name="do">
+                              <action id="0FFA6729-6AC0-BD05-E48E-E31E919C326B" name="if">
+                                <arg name="condition" value="!log_only"/>
+                                <arg name="then">
+                                  <action id="19300EF7-58D8-A88D-7447-E31E919D0E4C" name="break">
+                                    <arg name="label" value="LogOnly"/>
+                                  </action>
+                                </arg>
+                              </action>
+                              <action id="F811233E-CC57-02DB-1A52-E31E919D0C13" name="log">
+                                <arg name="message" value="&quot;ADD: &quot; + record"/>
+                                <arg name="level" value="&quot;INFO&quot;"/>
+                              </action>
+                              <action id="4440F3BD-CEA1-5E26-FF74-E31E919E7E6C" name="continue">
+                                <arg name="label" value="IterateRecords"/>
+                              </action>
+                            </arg>
+                          </action>
+                          <action id="BEB7E876-AE34-17A2-AEA2-E31E919F394B" name="saveLDAPRecord" outputVar="result">
+                            <arg name="ldapConnection" value="sessionMeta"/>
+                            <arg name="record" value="record"/>
+                          </action>
+                          <action id="24C04622-DE09-1C74-3F4A-E31E91A042CF" name="if">
+                            <arg name="condition" value="result"/>
+                            <arg name="then">
+                              <action id="8B00E6D7-77EF-AC8D-3BDB-E31E91A061A0" name="setVariable">
+                                <arg name="name" value="counterAdded"/>
+                                <arg name="value" value="counterAdded + 1"/>
+                              </action>
+                              <action id="CDC21009-4C6C-9DD7-6642-E31E91A17E3B" name="log">
+                                <arg name="message" value="&quot;Add saved.&quot;"/>
+                                <arg name="level" value="&quot;TRACE&quot;"/>
+                              </action>
+                              <action id="EE5697F8-07B5-E91A-7218-E31E91A246F0" name="logAuditEvent">
+                                <arg name="eventName" value="&quot;createAccount&quot;"/>
+                                <arg name="targetSystem" value="&quot;MetaDirectory&quot;"/>
+                                <arg name="targetID" value="record.idautoID"/>
+                                <arg name="target" value="record['@dn']"/>
+                                <arg name="perpetratorDN" value="Global.metaUser"/>
+                                <arg name="successful" value="true"/>
+                                <arg name="extendedProperties" value="record"/>
+                              </action>
+                            </arg>
+                            <arg name="else">
+                              <action id="04135A75-1358-BE12-805B-E31E91A58F0C" name="log">
+                                <arg name="message" value="&quot;Add failed&quot;"/>
+                                <arg name="level" value="&quot;ERROR&quot;"/>
+                              </action>
+                              <action id="79FFAACF-27B6-569E-CFF0-E31E91A605EB" name="log">
+                                <arg name="message" value="record"/>
+                                <arg name="level" value="&quot;ERROR&quot;"/>
+                              </action>
+                              <action id="44A0BD8E-48C6-0585-7663-E31E91A7FE73" name="logAuditEvent">
+                                <arg name="eventName" value="&quot;createAccount&quot;"/>
+                                <arg name="targetSystem" value="&quot;MetaDirectory&quot;"/>
+                                <arg name="targetID" value="record.idautoID"/>
+                                <arg name="target" value="record['@dn']"/>
+                                <arg name="perpetratorDN" value="Global.metaUser"/>
+                                <arg name="successful" value="false"/>
+                                <arg name="extendedProperties" value="record"/>
+                              </action>
+                            </arg>
+                          </action>
+                        </arg>
+                      </action>
+                      <action id="269BE1D9-B4D0-6EC5-E12D-E31E91C66415" name="continue">
+                        <arg name="label" value="IterateRecords"/>
+                      </action>
+                    </arg>
+                  </action>
+                  <action id="0AE351FD-820F-7C36-6120-E31E91C6487F" name="section">
+                    <arg name="label" value="Update"/>
+                    <arg name="do">
+                      <action id="57C77F21-2A76-AEBC-19DA-E31E91C70D5B" name="section">
+                        <arg name="label" value="Validate"/>
+                        <arg name="do">
+                          <action id="9AB66E8D-983F-CAC0-EAA5-E31E91C89670" name="FnHasRecordChanged" outputVar="changes">
+                            <arg name="new_record" value="record"/>
+                            <arg name="old_record" value="exists[0]"/>
+                          </action>
+                          <action id="645A5F8B-DDF0-6822-E2BA-E31E91CACEF9" name="if">
+                            <arg name="condition" value="!changes"/>
+                            <arg name="then">
+                              <action id="AB039F2E-4EF9-258A-1747-E31E91CBDA90" name="setVariable">
+                                <arg name="name" value="counterSkipped"/>
+                                <arg name="value" value="counterSkipped + 1"/>
+                              </action>
+                              <action id="121A6705-A130-D8BE-C6DC-E31E91CBB402" name="continue">
+                                <arg name="label" value="IterateRecords"/>
+                              </action>
+                            </arg>
+                          </action>
+                        </arg>
+                      </action>
+                      <action id="9528B569-01DD-15E9-D65E-E31E91CC0C8B" name="section">
+                        <arg name="label" value="Transform"/>
+                        <arg name="do">
+                          <action id="CCB1AAA6-CB0D-B8A4-CD01-E31E91CD6FB5" name="setRecordFieldValue">
+                            <arg name="record" value="record"/>
+                            <arg name="field" value="&quot;@dn&quot;"/>
+                            <arg name="value" value="exists[0]['@dn']"/>
+                          </action>
+                          <action id="7D3439DF-4A08-546A-D2B7-E31E91CE472D" name="getRecordFieldValues" outputVar="affiliations">
+                            <arg name="record" value="exists[0]"/>
+                            <arg name="field" value="&quot;idautoPersonAffiliations&quot;"/>
+                          </action>
+                          <action id="CAE0545D-199A-B8DE-B7D2-E31E91CF91D1" name="appendArrayItem">
+                            <arg name="array" value="affiliations"/>
+                            <arg name="item" value="&quot;employee&quot;"/>
+                          </action>
+                          <action id="72E73A5E-6598-08F8-C193-E31E91D06CEE" name="section">
+                            <arg name="label" value="StatusChange"/>
+                            <arg name="do">
+                              <action id="C39669BC-037C-E704-3C4A-E31E91D1052B" name="section">
+                                <arg name="label" value="Validate"/>
+                                <arg name="do">
+                                  <action id="99BC4185-755A-F16D-20DF-E31E91D25AD0" name="if">
+                                    <arg name="condition" value="record.idautoStatus == exists[0].idautoStatus"/>
+                                    <arg name="then">
+                                      <action id="63E75FA5-0D6D-1F50-88CC-E31E91D2C3AE" name="break">
+                                        <arg name="label" value="StatusChange"/>
+                                      </action>
+                                    </arg>
+                                  </action>
+                                  <action id="6720B9DC-8C52-52B8-3EC4-E31E91D334F6" name="setVariable">
+                                    <arg name="name" value="setEnabled"/>
+                                    <arg name="value" value="false"/>
+                                  </action>
+                                  <action id="6B3D3D19-AC63-047F-AEB0-E31E91D43159" name="setVariable">
+                                    <arg name="name" value="setDisabled"/>
+                                    <arg name="value" value="false"/>
+                                  </action>
+                                </arg>
+                              </action>
+                              <action id="6CCC6D30-FD83-EB83-4F62-E31E91D44F3E" name="section">
+                                <arg name="label" value="HandleEnable"/>
+                                <arg name="do">
+                                  <action id="BED722B5-0E9D-B782-CFFF-E31E91D59532" name="section">
+                                    <arg name="label" value="Validate"/>
+                                    <arg name="do">
+                                      <action id="BD052C56-202E-9AFE-D626-E31E91D62EE9" name="if">
+                                        <arg name="condition" value="record.idautoStatus != &quot;Active&quot;"/>
+                                        <arg name="then">
+                                          <action id="CAFB0923-4381-9931-9BB6-E31E91D6DB55" name="break">
+                                            <arg name="label" value="HandleEnable"/>
+                                          </action>
+                                        </arg>
+                                      </action>
+                                    </arg>
+                                  </action>
+                                  <action id="DE764386-5487-D909-381F-E31E91D79716" name="setRecordFieldValue">
+                                    <arg name="record" value="record"/>
+                                    <arg name="field" value="&quot;idautoDisabled&quot;"/>
+                                    <arg name="value" value="false"/>
+                                  </action>
+                                  <action id="77EDB450-98A7-495A-39D1-E33382D1739F" name="setRecordFieldValue">
+                                    <arg name="record" value="record"/>
+                                    <arg name="field" value="&quot;idautoPersonTermDate&quot;"/>
+                                    <arg name="value" value="null"/>
+                                  </action>
+                                  <action id="29C91F05-A447-2DB5-CBBD-E31E91D963FB" name="setVariable">
+                                    <arg name="name" value="setEnabled"/>
+                                    <arg name="value" value="true"/>
+                                  </action>
+                                  <action id="F63A9B95-F0F8-C56A-76CF-E31E91D99CAE" name="break">
+                                    <arg name="label" value="StatusChange"/>
+                                  </action>
+                                </arg>
+                              </action>
+                              <action id="3D6395E4-4344-20E8-3945-E31E91DAEBC4" name="section">
+                                <arg name="label" value="HandleDisable"/>
+                                <arg name="do">
+                                  <action id="1294C6EB-74DB-1B5F-78B9-E31E91DBCF7B" name="setRecordFieldValue">
+                                    <arg name="record" value="record"/>
+                                    <arg name="field" value="&quot;idautoDisabled&quot;"/>
+                                    <arg name="value" value="true"/>
+                                  </action>
+                                  <action id="3AD0E154-88EF-6E8F-6885-E3343A20452B" name="setRecordFieldValue">
+                                    <arg name="record" value="record"/>
+                                    <arg name="field" value="&quot;idautoPersonTermDate&quot;"/>
+                                    <arg name="value" value="currentDate"/>
+                                  </action>
+                                  <action id="82F311BF-A7FD-F67F-29A5-E31E91DCDC9B" name="setVariable">
+                                    <arg name="name" value="setDisabled"/>
+                                    <arg name="value" value="true"/>
+                                  </action>
+                                </arg>
+                              </action>
+                            </arg>
+                          </action>
+                          <action id="E523DC69-8DFF-BD84-8063-E3CBCCAB09F8" name="section">
+                            <arg name="label" value="Affiliations"/>
+                            <arg name="do">
+                              <action id="F4B51027-7F8B-A597-7B10-E3D0030B525D" name="setRecordFieldValue">
+                                <arg name="record" value="record"/>
+                                <arg name="field" value="&quot;eduPersonPrimaryAffiliation&quot;"/>
+                                <arg name="value" value="&quot;employee&quot;"/>
+                              </action>
+                              <action id="E02B5958-8235-85F1-62C0-E3CBEEF3CB2C" name="getRecordFieldValues" outputVar="affiliations">
+                                <arg name="record" value="exists[0]"/>
+                                <arg name="field" value="&quot;eduPersonAffiliation&quot;"/>
+                              </action>
+                              <action id="4ECF474D-0406-77F4-E7B9-E3CC698A1AA2" name="appendArrayItem">
+                                <arg name="array" value="affiliations"/>
+                                <arg name="item" value="&quot;employee&quot;"/>
+                              </action>
+                              <action id="8C83F854-732D-A36B-4F26-E3CD2BC4FD5F" name="setRecordFieldValues">
+                                <arg name="record" value="record"/>
+                                <arg name="field" value="&quot;eduPersonAffiliation&quot;"/>
+                                <arg name="values" value="affiliations"/>
+                              </action>
+                              <action id="C6A57852-540C-0069-C0A9-E3CE085DE28F" name="getRecordFieldValues" outputVar="affiliations">
+                                <arg name="record" value="exists[0]"/>
+                                <arg name="field" value="&quot;eduPersonScopedAffiliation&quot;"/>
+                              </action>
+                              <action id="6499128A-2378-64EA-B326-E3CE085E5D92" name="appendArrayItem">
+                                <arg name="array" value="affiliations"/>
+                                <arg name="item" value="&quot;employee@&quot; + record.idautoPersonDeptDescr ? record.idautoPersonDeptDescr : exists[0].idautoPersonDeptDescr"/>
+                              </action>
+                              <action id="FBC5BA76-8A3F-E57B-B8AD-E3CE085F5626" name="setRecordFieldValues">
+                                <arg name="record" value="record"/>
+                                <arg name="field" value="&quot;eduPersonScopedAffiliation&quot;"/>
+                                <arg name="values" value="affiliations"/>
+                              </action>
+                            </arg>
+                          </action>
+                        </arg>
+                      </action>
+                      <action id="9911F3B4-A9A5-C447-648A-E31E91DDF280" name="section">
+                        <arg name="label" value="Save"/>
+                        <arg name="do">
+                          <action id="A311133A-77E7-ED62-1323-E31E91DE99D8" name="section">
+                            <arg name="label" value="Testing"/>
+                            <arg name="do">
+                              <action id="6391E9DF-B0B7-9A22-7CCD-E31E91DEB08A" name="section">
+                                <arg name="label" value="Validate"/>
+                                <arg name="do">
+                                  <action id="9038733A-4DE1-4802-21EE-E31E91DFEF27" name="if">
+                                    <arg name="condition" value="!assertion"/>
+                                    <arg name="then">
+                                      <action id="7125DE6A-D9C7-A972-A449-E31E91E0F3E7" name="break">
+                                        <arg name="label" value="Testing"/>
+                                      </action>
+                                    </arg>
+                                  </action>
+                                </arg>
+                              </action>
+                              <action id="4F0A0AF7-D7BD-DFE8-F498-E31E91E0B56C" name="return">
+                                <arg name="value" value="record"/>
+                              </action>
+                              <action id="27B38FE0-3031-6AA5-A1D6-E31E91E18A7A" name="continue">
+                                <arg name="label" value="IterateRecords"/>
+                              </action>
+                            </arg>
+                          </action>
+                          <action id="F9123B5D-9C58-7C0B-3C1E-E31E91E10B3D" name="section">
+                            <arg name="label" value="LogOnly"/>
+                            <arg name="do">
+                              <action id="454C33B0-9E08-CE58-0D98-E31E91E21749" name="if">
+                                <arg name="condition" value="!log_only"/>
+                                <arg name="then">
+                                  <action id="DE04BC22-59FD-C533-D934-E31E91E3E8E4" name="break">
+                                    <arg name="label" value="LogOnly"/>
+                                  </action>
+                                </arg>
+                              </action>
+                              <action id="620E3D06-DDF7-21CE-4467-E31E91E3D6C3" name="log">
+                                <arg name="message" value="&quot;UPDATE: &quot; + record"/>
+                                <arg name="level" value="&quot;INFO&quot;"/>
+                              </action>
+                              <action id="3E71C17B-4348-C02E-2FA0-E31E91E440F2" name="if">
+                                <arg name="condition" value="setEnabled"/>
+                                <arg name="then">
+                                  <action id="A495C8BD-71B3-388B-4E3F-E31E91E5AD93" name="log">
+                                    <arg name="message" value="&quot;ENABLE: &quot; + record"/>
+                                    <arg name="level" value="&quot;INFO&quot;"/>
+                                  </action>
+                                </arg>
+                              </action>
+                              <action id="A4637150-DCAE-BCDB-C025-E31E91E6809D" name="if">
+                                <arg name="condition" value="setDisabled"/>
+                                <arg name="then">
+                                  <action id="67E1FC89-0E20-3B62-27B3-E31E91E6F1BB" name="log">
+                                    <arg name="message" value="&quot;DISABLE: &quot; + record"/>
+                                    <arg name="level" value="&quot;INFO&quot;"/>
+                                  </action>
+                                </arg>
+                              </action>
+                              <action id="57F8B2F5-4BB3-162F-C365-E31E91E80195" name="continue">
+                                <arg name="label" value="IterateRecords"/>
+                              </action>
+                            </arg>
+                          </action>
+                          <action id="DDE4516F-0555-4456-45A5-E31E91E94FEA" name="saveLDAPRecord" outputVar="result">
+                            <arg name="ldapConnection" value="sessionMeta"/>
+                            <arg name="record" value="record"/>
+                          </action>
+                          <action id="C54A024E-9270-0E19-0DC8-E31E91E93A4D" name="if">
+                            <arg name="condition" value="result"/>
+                            <arg name="then">
+                              <action id="C134F3E0-356C-0C54-046E-E31E91EAED4D" name="setVariable">
+                                <arg name="name" value="counterUpdated"/>
+                                <arg name="value" value="counterUpdated + 1"/>
+                              </action>
+                              <action id="C47766D6-2F14-7FCF-4254-E31E91EB5195" name="log">
+                                <arg name="message" value="&quot;Record updated.&quot;"/>
+                                <arg name="level" value="&quot;TRACE&quot;"/>
+                              </action>
+                              <action id="80A0A477-5547-024D-D18D-E31E91EBB4AC" name="logAuditEvent">
+                                <arg name="eventName" value="&quot;updateAccount&quot;"/>
+                                <arg name="targetSystem" value="&quot;MetaDirectory&quot;"/>
+                                <arg name="targetID" value="exists[0].idautoID"/>
+                                <arg name="target" value="record['@dn']"/>
+                                <arg name="perpetratorDN" value="Global.metaUser"/>
+                                <arg name="successful" value="true"/>
+                                <arg name="extendedProperties" value="changes"/>
+                              </action>
+                              <action id="FCB6AF24-C75B-3614-BE15-E31E91EF1E8F" name="if">
+                                <arg name="condition" value="setEnabled"/>
+                                <arg name="then">
+                                  <action id="AA6EBA2B-EC22-FC55-5398-E31E91EF1623" name="setVariable">
+                                    <arg name="name" value="counterEnabled"/>
+                                    <arg name="value" value="counterEnabled + 1"/>
+                                  </action>
+                                  <action id="5A5A0AF3-799A-D56A-F6CB-E31E91F08D0A" name="logAuditEvent">
+                                    <arg name="eventName" value="&quot;enableAccount&quot;"/>
+                                    <arg name="targetSystem" value="&quot;MetaDirectory&quot;"/>
+                                    <arg name="targetID" value="exists[0].idautoID"/>
+                                    <arg name="target" value="record['@dn']"/>
+                                    <arg name="perpetratorDN" value="Global.metaUser"/>
+                                    <arg name="successful" value="true"/>
+                                    <arg name="extendedProperties" value="changes"/>
+                                  </action>
+                                </arg>
+                              </action>
+                              <action id="E41593D1-EA99-FAAD-12D3-E31E91F34D1E" name="if">
+                                <arg name="condition" value="setDisabled"/>
+                                <arg name="then">
+                                  <action id="62584372-09AC-795C-602D-E31E91F42CE6" name="setVariable">
+                                    <arg name="name" value="counterDisabled"/>
+                                    <arg name="value" value="counterEnabled + 1"/>
+                                  </action>
+                                  <action id="DB813C2A-3CCA-142A-2288-E31E91F49263" name="logAuditEvent">
+                                    <arg name="eventName" value="&quot;disableAccount&quot;"/>
+                                    <arg name="targetSystem" value="&quot;MetaDirectory&quot;"/>
+                                    <arg name="targetID" value="exists[0].idautoID"/>
+                                    <arg name="target" value="record['@dn']"/>
+                                    <arg name="perpetratorDN" value="Global.metaUser"/>
+                                    <arg name="successful" value="true"/>
+                                    <arg name="extendedProperties" value="changes"/>
+                                  </action>
+                                </arg>
+                              </action>
+                            </arg>
+                            <arg name="else">
+                              <action id="6A9C4FC2-E222-8974-8728-E31E91F85BD3" name="log">
+                                <arg name="message" value="&quot;Update failed&quot;"/>
+                                <arg name="level" value="&quot;ERROR&quot;"/>
+                              </action>
+                              <action id="DB574EB7-D468-E334-B588-E31E91F9D8FB" name="log">
+                                <arg name="message" value="record"/>
+                                <arg name="level" value="&quot;ERROR&quot;"/>
+                              </action>
+                              <action id="32D877FB-23C1-1D45-73F2-E31E91F93747" name="logAuditEvent">
+                                <arg name="eventName" value="&quot;updateAccount&quot;"/>
+                                <arg name="targetSystem" value="&quot;MetaDirectory&quot;"/>
+                                <arg name="targetID" value="exists[0].idautoID"/>
+                                <arg name="target" value="record['@dn']"/>
+                                <arg name="perpetratorDN" value="Global.metaUser"/>
+                                <arg name="successful" value="false"/>
+                                <arg name="extendedProperties" value="changes"/>
+                              </action>
+                              <action id="ECCC5016-CC60-0415-A9A8-E31E91FCF684" name="if">
+                                <arg name="condition" value="setEnabled"/>
+                                <arg name="then">
+                                  <action id="2001DE93-3AF7-6811-057E-E31E91FDE3DB" name="logAuditEvent">
+                                    <arg name="eventName" value="&quot;enableAccount&quot;"/>
+                                    <arg name="targetSystem" value="&quot;MetaDirectory&quot;"/>
+                                    <arg name="targetID" value="exists[0].idautoID"/>
+                                    <arg name="target" value="record['@dn']"/>
+                                    <arg name="perpetratorDN" value="Global.metaUser"/>
+                                    <arg name="successful" value="false"/>
+                                    <arg name="extendedProperties" value="changes"/>
+                                  </action>
+                                </arg>
+                              </action>
+                              <action id="4E324120-F2A9-C309-07A5-E31E9200B6F0" name="if">
+                                <arg name="condition" value="setDisabled"/>
+                                <arg name="then">
+                                  <action id="C2268B55-D06F-CD40-DF09-E31E9200EAAA" name="logAuditEvent">
+                                    <arg name="eventName" value="&quot;disableAccount&quot;"/>
+                                    <arg name="targetSystem" value="&quot;MetaDirectory&quot;"/>
+                                    <arg name="targetID" value="exists[0].idautoID"/>
+                                    <arg name="target" value="record['@dn']"/>
+                                    <arg name="perpetratorDN" value="Global.metaUser"/>
+                                    <arg name="successful" value="false"/>
+                                    <arg name="extendedProperties" value="changes"/>
+                                  </action>
+                                </arg>
+                              </action>
+                            </arg>
+                          </action>
+                        </arg>
+                      </action>
+                    </arg>
+                  </action>
+                </arg>
+              </action>
+            </arg>
+          </action>
+        </arg>
+      </action>
+      <action id="C9BFF34D-2B96-63C1-5F4A-E31EBA5847D8" name="section">
+        <arg name="label" value="Close"/>
+        <arg name="do">
+          <action id="97F1A9A8-CEB5-62D0-E643-E31ED890C36F" name="close">
+            <arg name="closeable" value="records"/>
+          </action>
+          <action id="83CCAEEA-B2A3-AD00-E63E-E31EBA59112C" name="close">
+            <arg name="closeable" value="sessionMeta"/>
+          </action>
+        </arg>
+      </action>
+      <action id="06FAF69A-8A1A-5C31-CA28-E31EBA5BF360" name="section">
+        <arg name="label" value="Results"/>
+        <arg name="do">
+          <action id="6EF502D2-A49B-A08C-3479-E31EBA5B11D8" name="log">
+            <arg name="message" value="&quot;Total records processed: &quot; + counterTotal"/>
+            <arg name="level" value="&quot;INFO&quot;"/>
+          </action>
+          <action id="A5D72460-8D40-C991-3165-E31EBA5C8E96" name="log">
+            <arg name="message" value="&quot;Total records skipped: &quot; + counterSkipped"/>
+            <arg name="level" value="&quot;INFO&quot;"/>
+          </action>
+          <action id="8EAF602A-4F19-7B40-8748-E31EBA5D2C9B" name="log">
+            <arg name="message" value="&quot;Total records added: &quot; + counterAdded"/>
+            <arg name="level" value="&quot;INFO&quot;"/>
+          </action>
+          <action id="9327ABC5-B9C6-CBCF-FA8D-E31EBA5E095C" name="log">
+            <arg name="message" value="&quot;Total records updated: &quot; + counterUpdated"/>
+            <arg name="level" value="&quot;INFO&quot;"/>
+          </action>
+          <action id="88A2413E-5742-BF78-5AAB-E31EBA5F646A" name="log">
+            <arg name="message" value="&quot;Total records enabled: &quot; + counterEnabled"/>
+            <arg name="level" value="&quot;INFO&quot;"/>
+          </action>
+          <action id="4B295855-68F9-3FA1-1582-E31EBA60EAF5" name="log">
+            <arg name="message" value="&quot;Total records disabled: &quot; + counterDisabled"/>
+            <arg name="level" value="&quot;INFO&quot;"/>
+          </action>
+        </arg>
+      </action>
+    </actions>
+  </actionDef>
+</actionDefs>
